@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>量子もつれインタラクティブ解説 — シングレット状態とベル（CHSH）試験</title>
+<style>
+  :root {
+    --bg: #0a0f1e;
+    --card: #121a30;
+    --card2: #0f1628;
+    --line: #26324f;
+    --text: #dbe4f5;
+    --dim: #8fa0c2;
+    --up: #45d4ff;
+    --down: #ffa257;
+    --accent: #7aa2ff;
+    --good: #57d9a3;
+    --bad: #ff6b6b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", Meiryo, sans-serif;
+    line-height: 1.75;
+  }
+  header {
+    padding: 34px 20px 22px;
+    text-align: center;
+    background: radial-gradient(ellipse at top, #16224a 0%, var(--bg) 70%);
+    border-bottom: 1px solid var(--line);
+  }
+  header h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: 1px; }
+  header .sub { color: var(--dim); font-size: 14px; margin: 0; }
+  main { max-width: 900px; margin: 0 auto; padding: 20px 14px 60px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 22px 24px;
+    margin: 22px 0;
+  }
+  h2 { font-size: 19px; margin: 0 0 14px; color: #fff; border-left: 4px solid var(--accent); padding-left: 10px; }
+  h3 { font-size: 15px; margin: 18px 0 8px; color: var(--accent); }
+  p { margin: 8px 0; font-size: 14.5px; }
+  .formula {
+    font-family: "STIX Two Math", "Cambria Math", "Yu Mincho", serif;
+    font-size: 18px;
+    text-align: center;
+    background: var(--card2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 8px;
+    margin: 12px 0;
+  }
+  .facts { margin: 8px 0; padding-left: 20px; font-size: 14.5px; }
+  .facts li { margin: 5px 0; }
+  .cols { display: flex; gap: 24px; flex-wrap: wrap; }
+  .cols > div { flex: 1 1 340px; }
+  .timeline { list-style: none; margin: 0; padding: 0; }
+  .timeline li { padding: 7px 0 7px 0; border-bottom: 1px dashed var(--line); font-size: 14px; }
+  .timeline li:last-child { border-bottom: none; }
+  .timeline .year {
+    display: inline-block;
+    min-width: 64px;
+    font-weight: bold;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  canvas { display: block; width: 100%; height: auto; background: var(--card2); border: 1px solid var(--line); border-radius: 8px; }
+  .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 14px 0; }
+  .sliders { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 26px; margin: 12px 0; }
+  .slider-row { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+  .slider-row label { min-width: 96px; color: var(--dim); }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--accent); }
+  .slider-row .val { min-width: 52px; text-align: right; font-variant-numeric: tabular-nums; font-weight: bold; }
+  button {
+    background: #1d2a4d;
+    color: var(--text);
+    border: 1px solid #35477a;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  button:hover { background: #253561; }
+  button.primary { background: #27407e; border-color: #3f5da8; }
+  button.primary:hover { background: #2f4c95; }
+  button.running { background: #5a2d3a; border-color: #8a4456; }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin: 14px 0;
+  }
+  .stat {
+    background: var(--card2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .stat .k { font-size: 12.5px; color: var(--dim); }
+  .stat .v { font-size: 18px; font-weight: bold; font-variant-numeric: tabular-nums; }
+  .stat .v small { font-size: 12px; color: var(--dim); font-weight: normal; }
+  .bar-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 13px; }
+  .bar { flex: 1; height: 14px; background: var(--card2); border-radius: 7px; overflow: hidden; border: 1px solid var(--line); }
+  .bar .fill-up { height: 100%; background: var(--up); transition: width .2s; }
+  .bar .fill-down { height: 100%; background: var(--down); transition: width .2s; }
+  .bar .fill-opp { height: 100%; background: var(--down); transition: width .2s; }
+  .bar .fill-same { height: 100%; background: var(--up); transition: width .2s; }
+  .last { font-size: 15px; font-variant-numeric: tabular-nums; }
+  .up { color: var(--up); font-weight: bold; }
+  .down { color: var(--down); font-weight: bold; }
+  .note { font-size: 13px; color: var(--dim); }
+  .verdict {
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 14.5px;
+    border: 1px solid;
+  }
+  .verdict.violate { background: #2a1626; border-color: #a04a6a; color: #ffc2d4; }
+  .verdict.no-violate { background: #12251d; border-color: #3a7a5c; color: #b8f0d8; }
+  .gauge-wrap { margin: 16px 0 6px; }
+  .gauge {
+    position: relative;
+    height: 26px;
+    background: var(--card2);
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    overflow: hidden;
+  }
+  .gauge .g-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 13px; transition: width .4s; }
+  .gauge .g-mark { position: absolute; top: 0; bottom: 0; width: 2px; background: #fff; opacity: .8; }
+  .gauge-labels { position: relative; height: 30px; font-size: 11.5px; color: var(--dim); margin-top: 4px; }
+  .gauge-labels span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+  .big-s { font-size: 30px; font-weight: bold; font-variant-numeric: tabular-nums; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 700px) { .grid2 { grid-template-columns: 1fr; } .sliders { grid-template-columns: 1fr; } }
+  table.evals { border-collapse: collapse; margin: 10px 0; font-size: 14px; font-variant-numeric: tabular-nums; }
+  table.evals td, table.evals th { border: 1px solid var(--line); padding: 6px 12px; text-align: center; }
+  table.evals th { background: var(--card2); color: var(--dim); font-weight: normal; }
+  footer { text-align: center; color: var(--dim); font-size: 12.5px; padding: 24px 16px 40px; }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+  .src-list { font-size: 13px; }
+  .src-list li { margin: 3px 0; }
+  .radio-row { display: flex; gap: 18px; font-size: 14px; margin: 8px 0; }
+  .radio-row label { cursor: pointer; }
+  .tag { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 10px; border: 1px solid var(--line); color: var(--dim); vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>量子もつれインタラクティブ解説</h1>
+  <p class="sub">スピン1/2粒子のシングレット状態 |Ψ⁻⟩ と ベル（CHSH）試験 — 量子力学の予測に基づくシミュレーション</p>
+</header>
+
+<main>
+
+<section class="card">
+  <h2>1. 量子もつれとは</h2>
+  <div class="cols">
+    <div>
+      <p><strong>量子もつれ</strong>とは、複合系全体の量子状態が、各部分系の状態の積として表せない性質です。2つのスピン1/2粒子（電子のペアや、偏光もつれ光子など）の最も単純な例が<strong>シングレット状態</strong>です。</p>
+      <div class="formula">|Ψ⁻⟩ = ( |↑⟩<sub>A</sub>|↓⟩<sub>B</sub> − |↓⟩<sub>A</sub>|↑⟩<sub>B</sub> ) / √2</div>
+      <p>この状態は<strong>全角運動量がゼロ</strong>で、どの方向から見ても同じ形（回転対称）です。個別の粒子はどの軸に沿っても ↑/↓ が 1/2 ずつの完全な乱数で、決まった方向を持っていません。しかし「Aの測定結果とBの測定結果が<strong>同じ軸なら必ず反対</strong>」という関係は、ペア全体で厳密に成立します。</p>
+    </div>
+    <div>
+      <h3 style="margin-top:0">シングレット状態の予測（結果を +1 / −1 と数える）</h3>
+      <ul class="facts">
+        <li>同じ軸で測定 → 必ず反対（完全な逆相関、E = −1）</li>
+        <li>軸のなす角が θ → 相関 <strong>E(θ) = −cos θ</strong>
+          <span class="note">（E = 二つの結果の積の平均）</span></li>
+        <li>片方だけの結果は常に 50/50 の乱数であり、コントロール不能</li>
+        <li>→ 超光速通信は原理的に不可能（非シグナル性）</li>
+        <li>この相関は<strong>いかなる</strong>局所的隠れた変数理論でも説明できない（ベルの定理）</li>
+      </ul>
+      <h3>ベル（CHSH）不等式</h3>
+      <p>Alice と Bob がそれぞれ2種類の軸から選び測定するとき、もし結果が粒子が運んできた局所的な「事前決定」で決まるなら、</p>
+      <div class="formula">S = E(a,b) + E(a,b′) + E(a′,b) − E(a′,b′),&nbsp;&nbsp; |S| ≤ 2</div>
+      <p>が必ず成り立ちます。一方、シングレット状態の量子力学的予測は <strong>|S| の最大 2√2 ≈ 2.83</strong>（ツァイレソン上限＝量子力学が許す最大の値）に達します。実験は量子力学側を支持しています。</p>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>2. 歴史</h2>
+  <ul class="timeline">
+    <li><span class="year">1935</span> アインシュタイン＝ポドルスキー＝ローゼン（EPR）のパラドックス。量子力学は不完全だと主張。シュレーディンガーがこの現象を「もつれ（Verschränkung）」と命名。アインシュタインはこれを「不気味な遠隔作用」と呼んだ。</li>
+    <li><span class="year">1964</span> ジョン・ベルがベルの不等式を導出。もつれの議論が哲学問題から<strong>実験で検証可能な科学問題</strong>に。</li>
+    <li><span class="year">1969</span> CHSH 不等式（クラウザー＝ホーン＝シモーニ＝ホルト）が提案され、実験に向いた形になった。</li>
+    <li><span class="year">1972</span> フリードマン＆クラウザーが、もつれ光子の偏光でベル不等式違反を初めて実験的に確認。</li>
+    <li><span class="year">1982</span> アスペらが測定軸を高速に切り替える実験で、局所性仮定をさらに厳密にチェックし違反を確認。</li>
+    <li><span class="year">2015–</span> 検出効率と局所性の「抜け穴（loophole）」を同時に閉じたベル試験が実現。</li>
+    <li><span class="year">2022</span> ノーベル物理学賞：アラン・アスペ、ジョン・クラウザー、アントン・ツァイリンガー。「もつれた光子を用い、ベル不等式の違反を実証し、量子情報科学の先駆となった業績」による。</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>3. 実験1：相関は軸の角度で変わる</h2>
+  <p>中央でペアになったシングレット状態の粒子を、Alice と Bob がそれぞれ自分の軸で測定します。軸の角度を変えると、同じ向き／反対向きの割合が変化します。</p>
+
+  <div class="sliders">
+    <div class="slider-row">
+      <label for="alpha">Alice の軸 α</label>
+      <input type="range" id="alpha" min="0" max="180" step="1" value="0">
+      <span class="val" id="alphaVal">0°</span>
+    </div>
+    <div class="slider-row">
+      <label for="beta">Bob の軸 β</label>
+      <input type="range" id="beta" min="0" max="180" step="1" value="45">
+      <span class="val" id="betaVal">45°</span>
+    </div>
+  </div>
+
+  <canvas id="e1Scene" width="720" height="240"></canvas>
+
+  <div class="controls">
+    <button id="e1Run" class="primary">▶ 連続測定</button>
+    <button id="e1Batch">10,000 ペア測定</button>
+    <button id="e1Sweep">曲線に打ち込み（0–180° スイープ）</button>
+    <button id="e1Reset">リセット</button>
+    <span class="note">軸を変えるたびに統計はリセットされます</span>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="k">最近の測定結果</div>
+      <div class="v last">A: <span id="e1LastA">–</span> &nbsp; B: <span id="e1LastB">–</span></div>
+    </div>
+    <div class="stat"><div class="k">測定数</div><div class="v" id="e1N">0 <small>ペア</small></div></div>
+    <div class="stat"><div class="k">相関 E（測定値 ± 標準誤差）</div><div class="v" id="e1E">–</div></div>
+    <div class="stat"><div class="k">理論値（量子力学 E = −cos θ）</div><div class="v" id="e1Q">–</div></div>
+    <div class="stat"><div class="k">局所隠れた変数モデル E = 2θ/π − 1</div><div class="v" id="e1L">–</div></div>
+    <div class="stat"><div class="k">Alice の結果分布（Bob の軸に無関係に 50/50）</div>
+      <div class="v" id="e1Alice">–</div>
+    </div>
+  </div>
+
+  <div class="bar-row"><span class="up">同じ向き ↑↑/↓↓</span><div class="bar"><div class="fill-same" id="e1SameBar" style="width:0%"></div></div><span id="e1SamePct">–</span></div>
+  <div class="bar-row"><span class="down">反対向き ↑↓/↓↑</span><div class="bar"><div class="fill-opp" id="e1OppBar" style="width:0%"></div></div><span id="e1OppPct">–</span></div>
+
+  <canvas id="e1Graph" width="720" height="320"></canvas>
+  <p class="note">実線＝量子力学 −cos θ、点線＝局所隠れた変数モデル（事前指示型）。白い点はスイープでの測定値（error bar は 95% 信頼区間）、大きい点＝現在の軸での実行中の測定値。同じ軸（θ=0）では両モデルとも完全な逆相関ですが、斜めの角度で初めて差が出ます — ここがベルの定理の核心です。</p>
+</section>
+
+<section class="card">
+  <h2>4. 実験2：ベル（CHSH）試験</h2>
+  <p>4 つの軸設定 (a, a′, b, b′) について、それぞれ新しいペアでたくさん測定し、相関 E を求めて S = E(a,b) + E(a,b′) + E(a′,b) − E(a′,b′) を計算します。</p>
+
+  <div class="radio-row">
+    <label><input type="radio" name="model" id="modelQ" checked> 量子力学（シングレット状態）</label>
+    <label><input type="radio" name="model" id="modelL"> 局所隠れた変数（事前指示型モデル）</label>
+  </div>
+
+  <div class="sliders">
+    <div class="slider-row">
+      <label for="sA">a（Alice）</label>
+      <input type="range" id="sA" min="-180" max="180" step="1" value="0">
+      <span class="val" id="vA">0°</span>
+    </div>
+    <div class="slider-row">
+      <label for="sB">b（Bob）</label>
+      <input type="range" id="sB" min="-180" max="180" step="1" value="45">
+      <span class="val" id="vB">45°</span>
+    </div>
+    <div class="slider-row">
+      <label for="sAp">a′（Alice）</label>
+      <input type="range" id="sAp" min="-180" max="180" step="1" value="90">
+      <span class="val" id="vAp">90°</span>
+    </div>
+    <div class="slider-row">
+      <label for="sBp">b′（Bob）</label>
+      <input type="range" id="sBp" min="-180" max="180" step="1" value="-45">
+      <span class="val" id="vBp">−45°</span>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="e2Run" class="primary">ベル試験を実行（各設定 20,000 ペア）</button>
+    <button id="e2Std">標準設定に戻す（a=0°, a′=90°, b=45°, b′=−45°）</button>
+  </div>
+
+  <table class="evals" id="e2Table">
+    <tr><th>設定</th><th>角度差 θ</th><th>E（測定）</th><th>E（理論）</th></tr>
+    <tr><td>E(a,b)</td><td id="dAB">–</td><td id="eAB">–</td><td id="tAB">–</td></tr>
+    <tr><td>E(a,b′)</td><td id="dABp">–</td><td id="eABp">–</td><td id="tABp">–</td></tr>
+    <tr><td>E(a′,b)</td><td id="dAPb">–</td><td id="eAPb">–</td><td id="tAPb">–</td></tr>
+    <tr><td>E(a′,b′)</td><td id="dAPBp">–</td><td id="eAPBp">–</td><td id="tAPBp">–</td></tr>
+  </table>
+
+  <div class="grid2">
+    <div>
+      <p>S（測定値）＝ <span class="big-s" id="sVal">–</span> <span class="note" id="sErr"></span></p>
+      <p>理論値 S（選択モデル）＝ <span id="theoryS" style="font-size:18px;font-weight:bold">–</span></p>
+      <p class="note">局所実在論の限界：|S| ≤ 2<br>量子力学の上限（ツァイレソン上限）：|S| ≤ 2√2 ≈ 2.828<br>代数的最大値：|S| ≤ 4</p>
+    </div>
+    <div class="gauge-wrap">
+      <div class="gauge">
+        <div class="g-fill" id="gaugeFill" style="width:0%"></div>
+        <div class="g-mark" style="left:50%"></div>
+        <div class="g-mark" style="left:70.71%"></div>
+      </div>
+      <div class="gauge-labels">
+        <span style="left:0%">0</span>
+        <span style="left:50%">2（局所実在の限界）</span>
+        <span style="left:70.71%">2√2 ≈ 2.828（量子の上限）</span>
+        <span style="left:100%">4</span>
+      </div>
+      <div class="verdict" id="verdict" style="display:none"></div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>5. なぜ超光速通信できないのか（非シグナル性）</h2>
+  <p>Bob がどの軸を選ぶかによって A と B の相関は変化しますが、<strong>Alice 一人ではそれを知る術がありません</strong>。なぜなら、Bob の軸の選び方にかかわらず、Alice 自身の結果は常に ↑/↓ 1/2ずつの乱数だからです（上の実験1の「Alice の結果分布」を Bob の軸を変えながら見てください — 常に 50/50 のままで変化しません）。</p>
+  <p>もつれ粒子どうしの相関を確認するには、双方が各自の結果を<strong>光速以下の通常の通信路で照合</strong>するしかありません。測定が「即座にもう片方の状態を決めてしまう」ように見えても、情報が届く速度は光速度を超えません。この性質は量子力学と相対論が両立できる理由であり、「非シグナル性（no-signaling）」と呼ばれる定理として証明されています。</p>
+</section>
+
+<section class="card">
+  <h2>6. このシミュレーションについて・参考</h2>
+  <ul class="facts">
+    <li>本プログラムは<strong>量子力学の予測をモンテカルロ法でサンプリングしたシミュレーション</strong>です。各ペアの結果は Born ルールの確率分布 P(反対) = cos²(θ/2)、P(同じ) = sin²(θ/2) から生成しています。「相関が物理的にどう実現されるか」の機構そのもののモデルではありません。</li>
+    <li>「局所隠れた変数」モデルは、粒子対の生成時に共通の隠れた変数 λ を渡し、<strong>あらゆる軸に対する測定結果を事前決定</strong>した最も単純な決定論的モデル（A = sign cos(α−λ), B = −sign cos(β−λ)）です。ベルの定理は<strong>すべての</strong>局所隠れた変数理論に |S| ≤ 2 を強いるので、この1つのモデルが 2√2 に届かないことは代表的です。</li>
+    <li>実際の光子実験では偏光を測定します。偏光は π 周期なので相関は E = −cos 2θ になり、標準的な角度は a = 0°, a′ = 45°, b = 22.5°, b′ = 67.5° です。スピン1/2の場合は本ページのように E = −cos θ です。</li>
+    <li>検出器は理想（検出効率 100%、フェアサンプリング）としています。実際の実験では検出の抜け穴・局所性の抜け穴などに注意が必要です。</li>
+    <li>「相関」は古典的な確率理論の相関と同じものではなく、「適切な実験によって実際の相関を生成できる潜在的な相関」と理解すべきです（ベルマンの靴下とよく比較されますが、もつれはそれと根本的に異なります）。</li>
+  </ul>
+  <h3>参考資料</h3>
+  <ul class="facts src-list">
+    <li><a href="https://ja.wikipedia.org/wiki/%E9%87%8F%E5%AD%90%E3%82%82%E3%81%A4%E3%82%8C" target="_blank" rel="noopener">量子もつれ — Wikipedia（日本語版）</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Quantum_entanglement" target="_blank" rel="noopener">Quantum entanglement — Wikipedia</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Bell%27s_theorem" target="_blank" rel="noopener">Bell's theorem — Wikipedia</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/CHSH_inequality" target="_blank" rel="noopener">CHSH inequality — Wikipedia</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Tsirelson%27s_bound" target="_blank" rel="noopener">Tsirelson's bound — Wikipedia</a></li>
+    <li><a href="https://www.nobelprize.org/prizes/physics/2022/press-release/" target="_blank" rel="noopener">The Nobel Prize in Physics 2022 — NobelPrize.org</a></li>
+  </ul>
+</section>
+
+</main>
+
+<footer>
+  量子もつれインタラクティブ解説 — スピン1/2 シングレット状態と CHSH 試験<br>
+  ブラウザで index.html を開くだけで動作します（外部ライブラリ不要）
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
